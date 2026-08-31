@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 
-from db import make_tasks_db, make_users_db
+from db import make_users_db
 from register import router as register_router
 
 # Init db
