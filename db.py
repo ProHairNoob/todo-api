@@ -1,6 +1,5 @@
-from pathlib import Path
 import sqlite3
-
+from pathlib import Path
 
 db_dir = Path("./db")
 db_dir.mkdir(parents=True, exist_ok=True)
@@ -10,7 +9,6 @@ users_path.touch(exist_ok=True)
 
 tasks_path = Path("db/tasks.db")
 tasks_path.touch(exist_ok=True)
-
 
 # router = APIRouter()
 
@@ -45,7 +43,7 @@ def make_tasks_db():
     conn = connect_tasks_db()
     cursor = conn.cursor()
     cursor.execute("""CREATE TABLE IF NOT EXISTS tasks(
-        user_id INTEGER PRIMARY KEY,
+        user_id INT,
         id INTEGER PRIMARY KEY,
         desc TEXT NOT NULL,
     )
