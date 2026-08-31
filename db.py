@@ -6,7 +6,11 @@ db_dir = Path("./db")
 db_dir.mkdir(parents=True, exist_ok=True)
 
 users_path = Path("db/users.db")
+users_path.touch(exist_ok=True)
+
 tasks_path = Path("db/tasks.db")
+tasks_path.touch(exist_ok=True)
+
 
 # router = APIRouter()
 
