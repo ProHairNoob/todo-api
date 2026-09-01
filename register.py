@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr
-import bcrypt
-
+from auth import hash_password
 from db import connect_users_db
 
 router = APIRouter()
@@ -15,13 +14,12 @@ class User(BaseModel):
 
 @router.post("/register")
 def register_user(user: User):
-    password = user.password.encode("utf-8")
-    hashed = bcrypt.hashpw(password, bcrypt.gensalt())
-
+    password = hash_password(user.password)
     conn = connect_users_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM users WHERE username = ?", ("koko",))
-    if not cursor.fetchone():
+    cursor.execute("SELECT 1 FROM users WHERE username = ?", (user.username,))
+    print(cursor.fetchall())
+    if cursor.fetchone():
         conn.close()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Username already exists"
@@ -29,15 +27,14 @@ def register_user(user: User):
 
     cursor.execute(
         "INSERT INTO users (username,email,password) VALUES (?,?,?)",
-        (user.username, user.email, hashed),
+        (user.username, user.email, password),
     )
     conn.commit()
     cursor.execute("SELECT * FROM users")
-    users = cursor.fetchone()
+    users = cursor.fetchall()
     counter = 0
     for u in users:
         counter += 1
-        print(u)
     print(f"there are {counter} users")
 
     conn.close()
