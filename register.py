@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr
+
 from auth import hash_password
 from db import connect_users_db
 
@@ -18,11 +19,16 @@ def register_user(user: User):
     conn = connect_users_db()
     cursor = conn.cursor()
     cursor.execute("SELECT 1 FROM users WHERE username = ?", (user.username,))
-    print(cursor.fetchall())
     if cursor.fetchone():
         conn.close()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Username already exists"
+        )
+    cursor.execute("SELECT 1 FROM users WHERE username = ?", (user.email,))
+    if cursor.fetchone():
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Email already exists"
         )
 
     cursor.execute(
