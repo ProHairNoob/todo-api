@@ -25,7 +25,7 @@ def register_user(user: User):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Username already exists"
         )
-    cursor.execute("SELECT 1 FROM users WHERE username = ?", (user.email,))
+    cursor.execute("SELECT 1 FROM users WHERE email = ?", (user.email,))
     if cursor.fetchone():
         conn.close()
         raise HTTPException(
@@ -37,15 +37,6 @@ def register_user(user: User):
         (user.username, user.email, password),
     )
     conn.commit()
-    # debug
-    cursor.execute("SELECT * FROM users")
-    users = cursor.fetchall()
-    counter = 0
-    for u in users:
-        counter += 1
-    print(f"there are {counter} users")
-
-    conn.close()
     return "User registered successfully"
 
 
@@ -55,10 +46,8 @@ def user_login(user: User):
     # check if email is valid
     conn = connect_users_db()
     cursor = conn.cursor()
-    print(user.email)
     cursor.execute("SELECT password FROM users WHERE email = ?", (user.email,))
     row = cursor.fetchone()
-    print(row, hash_password(user.password))
     conn.close()
     if not row:
         raise HTTPException(
