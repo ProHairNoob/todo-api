@@ -22,6 +22,17 @@ class login_user(BaseModel):
     password: str
 
 
+def validate_login(row, password):
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
+        )
+    if not bcrypt.checkpw(password.encode("utf-8"), row["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
+        )
+
+
 @router.post("/register")
 def register_user(user: sign_up_user):
     password = hash_password(user.password)
@@ -45,8 +56,14 @@ def register_user(user: sign_up_user):
         (user.username, user.email, password),
     )
     conn.commit()
+    cursor.execute("SELECT user_id FROM users WHERE email = ?", (user.email))
+    row = cursor.fetchone()
     conn.close()
-    return "User registered successfully"
+    user_id = row["user_id"]
+    token = create_token()
+    json_token = {"token": token, "user_id": user_id}
+
+    return json_token
 
 
 @router.post("/login")
@@ -57,20 +74,10 @@ def user_login(user: login_user):
     cursor = conn.cursor()
     cursor.execute("SELECT password ,user_id FROM users WHERE email = ?", (user.email,))
     row = cursor.fetchone()
-    if not row:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
-        )
-    if not bcrypt.checkpw(user.password.encode("utf-8"), row["password"]):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
-        )
+    validate_login(row, user.password)
     user_id = row["user_id"]
     token = create_token()
-    if row:
-        cursor.execute(
-            "INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id)
-        )
+    cursor.execute("INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id))
     conn.commit()
     conn.close()
 
