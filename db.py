@@ -5,22 +5,33 @@ db_dir = Path("./db")
 db_dir.mkdir(parents=True, exist_ok=True)
 
 users_path = Path("db/users.db")
-users_path.touch(exist_ok=True)
 
 tasks_path = Path("db/tasks.db")
-tasks_path.touch(exist_ok=True)
 
 # router = APIRouter()
 
 
-def connect_users_db():
-    conn = sqlite3.connect(users_path)
+def connect_db(path):
+    conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     return conn
 
 
+def make_token_db():
+    conn = connect_db(users_path)
+    cursor = conn.cursor()
+    cursor.execute("""CREATE TABLE IF NOT EXISTS tokens(
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    token TEXT NOT NULL UNIQUE
+    )
+    """)
+    conn.commit()
+    conn.close()
+
+
 def make_users_db():
-    conn = connect_users_db()
+    conn = connect_db(users_path)
     cursor = conn.cursor()
     cursor.execute("""CREATE TABLE IF NOT EXISTS users(
     user_id INTEGER PRIMARY KEY,
@@ -33,18 +44,14 @@ def make_users_db():
     conn.close()
 
 
-def connect_tasks_db():
-    conn = sqlite3.connect(tasks_path)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
 def make_tasks_db():
-    conn = connect_tasks_db()
+    conn = connect_db(tasks_path)
     cursor = conn.cursor()
     cursor.execute("""CREATE TABLE IF NOT EXISTS tasks(
         user_id INT,
         id INTEGER PRIMARY KEY,
-        desc TEXT NOT NULL,
+        desc TEXT NOT NULL
     )
     """)
+    conn.commit()
+    conn.close()
