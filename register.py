@@ -56,9 +56,7 @@ def register_user(user: sign_up_user):
         (user.username, user.email, password),
     )
     conn.commit()
-    cursor.execute("SELECT user_id FROM users WHERE email = ?", (user.email,))
-    row = cursor.fetchone()
-    user_id = row["user_id"]
+    user_id = cursor.lastrowid
     token = create_token()
     cursor.execute("INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id))
     conn.commit()
