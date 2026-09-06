@@ -50,7 +50,8 @@ def make_tasks_db():
     cursor.execute("""CREATE TABLE IF NOT EXISTS tasks(
         user_id INT,
         id INTEGER PRIMARY KEY,
-        desc TEXT NOT NULL
+        desc TEXT NOT NULL,
+        title TEXT NOT NULL
     )
     """)
     conn.commit()
