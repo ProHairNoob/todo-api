@@ -1,5 +1,6 @@
-import bcrypt
 import uuid
+
+import bcrypt
 
 
 def create_token():

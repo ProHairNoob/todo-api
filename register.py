@@ -1,23 +1,31 @@
 import bcrypt
+from pathlib import Path
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
-from auth import hash_password
-from db import connect_users_db
+from auth import hash_password, create_token
+from db import connect_db
 
 router = APIRouter()
 
+user_path = Path("./db/users.db")
 
-class User(BaseModel):
+
+class sign_up_user(BaseModel):
     username: str
     email: EmailStr
     password: str
 
 
+class login_user(BaseModel):
+    email: EmailStr
+    password: str
+
+
 @router.post("/register")
-def register_user(user: User):
+def register_user(user: sign_up_user):
     password = hash_password(user.password)
-    conn = connect_users_db()
+    conn = connect_db(user_path)
     cursor = conn.cursor()
     cursor.execute("SELECT 1 FROM users WHERE username = ?", (user.username,))
     if cursor.fetchone():
@@ -37,24 +45,34 @@ def register_user(user: User):
         (user.username, user.email, password),
     )
     conn.commit()
+    conn.close()
     return "User registered successfully"
 
 
 @router.post("/login")
-def user_login(user: User):
+def user_login(user: login_user):
     # check if password is valid
     # check if email is valid
-    conn = connect_users_db()
+    conn = connect_db(user_path)
     cursor = conn.cursor()
-    cursor.execute("SELECT password FROM users WHERE email = ?", (user.email,))
+    cursor.execute("SELECT password ,user_id FROM users WHERE email = ?", (user.email,))
     row = cursor.fetchone()
-    conn.close()
     if not row:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
         )
-    if not bcrypt.checkpw(user.password.encode("utf-8"), row[0]):
+    if not bcrypt.checkpw(user.password.encode("utf-8"), row["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
         )
-    return "login succesful"
+    user_id = row["user_id"]
+    token = create_token()
+    if row:
+        cursor.execute(
+            "INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id)
+        )
+    conn.commit()
+    conn.close()
+
+    json_token = {"token": token, "user_id": user_id}
+    return json_token
