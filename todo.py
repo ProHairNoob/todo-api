@@ -11,4 +11,4 @@ class Todo(BaseModel):
 
 @router.post("/todo")
 def create_task(todo: Todo, authorization: str = Header(...)):
-    pass
+    return todo, authorization

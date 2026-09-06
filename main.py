@@ -1,16 +1,19 @@
 import uvicorn
 from fastapi import FastAPI
 
-from db import make_token_db, make_users_db
+from db import make_token_db, make_users_db, make_tasks_db
 from register import router as register_router
+from todo import router as task_router
 
 # Init db
 make_users_db()
 make_token_db()
+make_tasks_db()
 
 app = FastAPI()
 
 app.include_router(register_router)
+app.include_router(task_router)
 
 
 @app.get("/")
