@@ -1,0 +1,8 @@
+
+__pycache__/
+.ruff_cache/
+db/
+*.pyc
+*.db
+*.json
+test.py
