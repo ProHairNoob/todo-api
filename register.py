@@ -1,7 +1,7 @@
 import bcrypt
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from auth import hash_password, create_token
 from db import connect_db
@@ -14,7 +14,7 @@ user_path = Path("./db/users.db")
 class sign_up_user(BaseModel):
     username: str
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8)
 
 
 class login_user(BaseModel):
@@ -56,11 +56,13 @@ def register_user(user: sign_up_user):
         (user.username, user.email, password),
     )
     conn.commit()
-    cursor.execute("SELECT user_id FROM users WHERE email = ?", (user.email))
+    cursor.execute("SELECT user_id FROM users WHERE email = ?", (user.email,))
     row = cursor.fetchone()
-    conn.close()
     user_id = row["user_id"]
     token = create_token()
+    cursor.execute("INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id))
+    conn.commit()
+    conn.close()
     json_token = {"token": token, "user_id": user_id}
 
     return json_token
