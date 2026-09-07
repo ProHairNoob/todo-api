@@ -26,15 +26,13 @@ def validate_login(row, password, conn):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
         )
-        conn.close()
     if not bcrypt.checkpw(password.encode("utf-8"), row["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
         )
-        conn.close()
 
 
-@router.post("/register")
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 def register_user(user: sign_up_user):
     password = hash_password(user.password)
     conn = connect_db(users_path)

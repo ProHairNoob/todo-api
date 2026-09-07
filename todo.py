@@ -11,9 +11,6 @@ class Todo(BaseModel):
     title: str
 
 
-# todo add creating the tasks by authorizing if the token exists in the database
-
-
 @router.post("/todos")
 def create_task(todo: Todo, authorization: str = Header(...)):
     conn = connect_db(users_path)
@@ -45,22 +42,28 @@ def update_task(task_id: int, todo: Todo, authorization: str = Header(...)):
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM tokens WHERE token = ?", (authorization,))
     row = cursor.fetchone()
-    user_id = row["user_id"]
     if not row:
         conn.close()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
         )
     if row:
+        user_id = row["user_id"]
         conn = connect_db(tasks_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+        cursor.execute(
+            "SELECT * FROM tasks WHERE id = ? AND user_id = ?",
+            (
+                task_id,
+                user_id,
+            ),
+        )
         task = cursor.fetchone()
         if not task:
+            conn.close()
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="404 NOT FOUND"
             )
-            conn.close()
 
         cursor.execute(
             "UPDATE tasks SET desc = ?, title = ? WHERE id = ? AND user_id = ?",
@@ -71,8 +74,37 @@ def update_task(task_id: int, todo: Todo, authorization: str = Header(...)):
         return {"id": task_id, "desc": todo.desc, "title": todo.title}
 
 
-@router.delete("/todo/{task_id}")
-def delete_tasks(task_id: int, todo: Todo, authorization: str = Header(...)):
+@router.delete("/todos/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_tasks(task_id: int, authorization: str = Header(...)):
     conn = connect_db(users_path)
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id FROM")
+    cursor.execute("SELECT user_id FROM tokens WHERE token = ?", (authorization,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
+        )
+    user_id = row["user_id"]
+    conn = connect_db(tasks_path)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM tasks WHERE id = ? AND user_id = ?",
+        (
+            task_id,
+            user_id,
+        ),
+    )
+    task = cursor.fetchone()
+    if not task:
+        conn.close()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+    cursor.execute(
+        "DELETE FROM tasks WHERE id = ? AND user_id = ?",
+        (
+            task_id,
+            user_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
