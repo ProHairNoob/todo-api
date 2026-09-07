@@ -1,6 +1,7 @@
 from pathlib import Path
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, status, Query
 from pydantic import BaseModel
+from starlette.status import HTTP_401_UNAUTHORIZED
 from db import connect_db, users_path, tasks_path
 
 router = APIRouter()
@@ -108,3 +109,35 @@ def delete_tasks(task_id: int, authorization: str = Header(...)):
     )
     conn.commit()
     conn.close()
+
+
+@router.get("/todos")
+def get_tasks(
+    authorization: str = Header(...),
+    page: int = Query(1, ge=1),
+    limit: int = Query(1, ge=1, le=100),
+):
+    offset = (page - 1) * limit
+    conn = connect_db(users_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_id FROM tokens WHERE token = ?", (authorization,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    user_id = row["user_id"]
+    conn = connect_db(tasks_path)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM tasks WHERE user_id = ? ORDER BY id LIMIT ? OFFSET ?",
+        (
+            user_id,
+            limit,
+            offset,
+        ),
+    )
+    tasks = cursor.fetchall()
+    cursor.execute("SELECT COUNT(*) FROM tasks WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
+    for task in tasks:
+        print(dict(task))
