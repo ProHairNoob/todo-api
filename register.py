@@ -2,13 +2,12 @@ import bcrypt
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
+from starlette.status import HTTP_201_CREATED
 
 from auth import hash_password, create_token
-from db import connect_db
+from db import connect_db, users_path
 
 router = APIRouter()
-
-user_path = Path("./db/users.db")
 
 
 class sign_up_user(BaseModel):
@@ -36,7 +35,7 @@ def validate_login(row, password):
 @router.post("/register")
 def register_user(user: sign_up_user):
     password = hash_password(user.password)
-    conn = connect_db(user_path)
+    conn = connect_db(users_path)
     cursor = conn.cursor()
     cursor.execute("SELECT 1 FROM users WHERE username = ?", (user.username,))
     if cursor.fetchone():
@@ -66,11 +65,11 @@ def register_user(user: sign_up_user):
     return json_token
 
 
-@router.post("/login")
+@router.post("/login", status_code=status.HTTP_201_CREATED)
 def user_login(user: login_user):
     # check if password is valid
     # check if email is valid
-    conn = connect_db(user_path)
+    conn = connect_db(users_path)
     cursor = conn.cursor()
     cursor.execute("SELECT password ,user_id FROM users WHERE email = ?", (user.email,))
     row = cursor.fetchone()
@@ -80,6 +79,5 @@ def user_login(user: login_user):
     cursor.execute("INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id))
     conn.commit()
     conn.close()
-
     json_token = {"token": token, "user_id": user_id}
     return json_token

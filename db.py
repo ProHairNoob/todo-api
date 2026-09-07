@@ -48,7 +48,7 @@ def make_tasks_db():
     conn = connect_db(tasks_path)
     cursor = conn.cursor()
     cursor.execute("""CREATE TABLE IF NOT EXISTS tasks(
-        user_id INT,
+        user_id INT NOT NULL,
         id INTEGER PRIMARY KEY,
         desc TEXT NOT NULL,
         title TEXT NOT NULL

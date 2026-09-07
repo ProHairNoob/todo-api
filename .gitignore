@@ -6,3 +6,4 @@ db/
 *.db
 *.json
 test.py
+session-history.md
