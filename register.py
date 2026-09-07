@@ -21,15 +21,17 @@ class login_user(BaseModel):
     password: str
 
 
-def validate_login(row, password):
+def validate_login(row, password, conn):
     if not row:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
         )
+        conn.close()
     if not bcrypt.checkpw(password.encode("utf-8"), row["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
         )
+        conn.close()
 
 
 @router.post("/register")
@@ -73,7 +75,7 @@ def user_login(user: login_user):
     cursor = conn.cursor()
     cursor.execute("SELECT password ,user_id FROM users WHERE email = ?", (user.email,))
     row = cursor.fetchone()
-    validate_login(row, user.password)
+    validate_login(row, user.password, conn)
     user_id = row["user_id"]
     token = create_token()
     cursor.execute("INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id))
