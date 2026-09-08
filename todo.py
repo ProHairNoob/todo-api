@@ -112,7 +112,7 @@ def delete_tasks(task_id: int, authorization: str = Header(...)):
 def get_tasks(
     authorization: str = Header(...),
     page: int = Query(1, ge=1),
-    limit: int = Query(1, ge=1, le=100),
+    limit: int = Query(10, ge=1, le=100),
 ):
     offset = (page - 1) * limit
     conn = connect_db(users_path)
