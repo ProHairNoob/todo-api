@@ -23,18 +23,16 @@ def create_task(todo: Todo, authorization: str = Header(...)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
         )
-    if row:
-        user_id = row["user_id"]
-
-        conn = connect_db(tasks_path)
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO tasks (user_id,desc,title) VALUES (?,?,?)",
-            (user_id, todo.desc, todo.title),
-        )
-        conn.commit()
-        conn.close()
-        return {"id": cursor.lastrowid, "desc": todo.desc, "title": todo.title}
+    user_id = row["user_id"]
+    conn = connect_db(tasks_path)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO tasks (user_id,desc,title) VALUES (?,?,?)",
+        (user_id, todo.desc, todo.title),
+    )
+    conn.commit()
+    conn.close()
+    return {"id": cursor.lastrowid, "desc": todo.desc, "title": todo.title}
 
 
 @router.put("/todos/{task_id}")
@@ -48,31 +46,30 @@ def update_task(task_id: int, todo: Todo, authorization: str = Header(...)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
         )
-    if row:
-        user_id = row["user_id"]
-        conn = connect_db(tasks_path)
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM tasks WHERE id = ? AND user_id = ?",
-            (
-                task_id,
-                user_id,
-            ),
-        )
-        task = cursor.fetchone()
-        if not task:
-            conn.close()
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="404 NOT FOUND"
-            )
-
-        cursor.execute(
-            "UPDATE tasks SET desc = ?, title = ? WHERE id = ? AND user_id = ?",
-            (todo.desc, todo.title, task_id, user_id),
-        )
-        conn.commit()
+    user_id = row["user_id"]
+    conn = connect_db(tasks_path)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM tasks WHERE id = ? AND user_id = ?",
+        (
+            task_id,
+            user_id,
+        ),
+    )
+    task = cursor.fetchone()
+    if not task:
         conn.close()
-        return {"id": task_id, "desc": todo.desc, "title": todo.title}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="404 NOT FOUND"
+        )
+
+    cursor.execute(
+        "UPDATE tasks SET desc = ?, title = ? WHERE id = ? AND user_id = ?",
+        (todo.desc, todo.title, task_id, user_id),
+    )
+    conn.commit()
+    conn.close()
+    return {"id": task_id, "desc": todo.desc, "title": todo.title}
 
 
 @router.delete("/todos/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
