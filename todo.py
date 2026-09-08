@@ -139,5 +139,17 @@ def get_tasks(
     tasks = cursor.fetchall()
     cursor.execute("SELECT COUNT(*) FROM tasks WHERE user_id = ?", (user_id,))
     row = cursor.fetchone()
-    for task in tasks:
-        print(dict(task))
+    total = row[0]
+    return {
+        "data": [
+            {
+                "id": t["id"],
+                "title": t["title"],
+                "desc": t["desc"],
+            }
+            for t in tasks
+        ],
+        "total": total,
+        "page": page,
+        "limit": limit,
+    }
