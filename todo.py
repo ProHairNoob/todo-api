@@ -41,8 +41,8 @@ def update_task(task_id: int, todo: Todo, authorization: str = Header(...)):
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM tokens WHERE token = ?", (authorization,))
     row = cursor.fetchone()
+    conn.close()
     if not row:
-        conn.close()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
         )
