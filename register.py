@@ -34,7 +34,6 @@ def validate_login(row, password, conn):
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 def register_user(user: sign_up_user):
-    password = hash_password(user.password)
     conn = connect_db(users_path)
     cursor = conn.cursor()
     cursor.execute("SELECT 1 FROM users WHERE username = ?", (user.username,))
@@ -49,7 +48,7 @@ def register_user(user: sign_up_user):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already exists"
         )
-
+    password = hash_password(user.password)
     cursor.execute(
         "INSERT INTO users (username,email,password) VALUES (?,?,?)",
         (user.username, user.email, password),
