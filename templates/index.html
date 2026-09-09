@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Log in — Todo{% endblock %}
+
+{% block content %}
+<main class="flex-1 flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-sm">
+    <div class="mb-8">
+      <h1 class="text-xl font-semibold text-zinc-100">Todo</h1>
+      <p class="mt-1 text-sm text-zinc-400">Log in to see your list.</p>
+    </div>
+
+    <form id="login-form" class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4" novalidate>
+      <div>
+        <label for="email" class="block text-sm text-zinc-300 mb-1.5">Email</label>
+        <input
+          id="email" name="email" type="email" autocomplete="email" required
+          class="w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          placeholder="you@example.com"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm text-zinc-300 mb-1.5">Password</label>
+        <input
+          id="password" name="password" type="password" autocomplete="current-password" required
+          class="w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <p id="login-error" class="text-sm text-rose-400 hidden" role="alert" aria-live="polite"></p>
+
+      <button
+        type="submit" id="login-submit"
+        class="w-full inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600
+               hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed
+               text-zinc-950 font-medium text-sm px-3 py-2.5 transition-colors"
+      >
+        <span id="login-indicator" class="hidden h-3.5 w-3.5 rounded-full border-2 border-zinc-950/40 border-t-zinc-950 animate-spin"></span>
+        <span>Log in</span>
+      </button>
+    </form>
+
+    <p class="mt-4 text-sm text-zinc-400 text-center">
+      No account yet?
+      <a href="{{ '/register' }}" class="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">Create one</a>
+    </p>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    TODO.redirectIfAuthenticated();
+
+    const form = document.getElementById("login-form");
+    const errorEl = document.getElementById("login-error");
+    const submitBtn = document.getElementById("login-submit");
+    const indicator = document.getElementById("login-indicator");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      TODO.hideMessage(errorEl);
+      submitBtn.disabled = true;
+      indicator.classList.remove("hidden");
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const { ok, data } = await TODO.api("/login", {
+        method: "POST",
+        auth: false,
+        body: { email, password },
+      });
+
+      submitBtn.disabled = false;
+      indicator.classList.add("hidden");
+
+      if (!ok) {
+        TODO.showMessage(errorEl, TODO.errorMessage(data, "Login failed. Try again."));
+        return;
+      }
+
+      TODO.setToken(data.token);
+      window.location.href = TODO.ROUTES.dashboard;
+    });
+  });
+</script>
+{% endblock %}

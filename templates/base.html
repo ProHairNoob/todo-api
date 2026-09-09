@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Todo{% endblock %}</title>
+
+  <!-- Tailwind (CDN build — no build step, see README-frontend.md) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Vendored htmx (see README-frontend.md for why it's not driving data requests yet) -->
+  <script src="/static/lib/htmx.min.js"></script>
+
+  {% block head %}{% endblock %}
+</head>
+<body class="h-full bg-zinc-950 text-zinc-100 font-sans antialiased">
+  <div class="min-h-full flex flex-col">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

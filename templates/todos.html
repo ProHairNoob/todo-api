@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Your todos{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex flex-col">
+  <header class="border-b border-zinc-800">
+    <div class="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-base font-semibold text-zinc-100">Todo</h1>
+      <button
+        id="logout-btn"
+        class="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
+      >Log out</button>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    <div class="max-w-2xl mx-auto px-4 py-8">
+
+      <p id="page-error" class="mb-4 text-sm text-rose-400 hidden" role="alert" aria-live="polite"></p>
+
+      <form id="add-form" class="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-6" novalidate>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <label for="add-title" class="sr-only">Title</label>
+          <input
+            id="add-title" name="title" type="text" required placeholder="Add a todo…"
+            class="flex-1 rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                   placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <label for="add-desc" class="sr-only">Description</label>
+          <input
+            id="add-desc" name="desc" type="text" placeholder="Details (optional)"
+            class="flex-1 rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                   placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <button
+            type="submit" id="add-submit"
+            class="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-500
+                   disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950 font-medium text-sm px-4 py-2 transition-colors whitespace-nowrap"
+          >
+            <span id="add-indicator" class="hidden h-3.5 w-3.5 rounded-full border-2 border-zinc-950/40 border-t-zinc-950 animate-spin"></span>
+            <span>Add</span>
+          </button>
+        </div>
+      </form>
+
+      <div id="empty-state" class="hidden text-center py-16 text-zinc-500 text-sm">
+        No todos yet — add one above.
+      </div>
+
+      <ul id="todo-list" class="space-y-2"></ul>
+
+      <div id="load-more-wrap" class="hidden mt-4 text-center">
+        <button
+          id="load-more-btn"
+          class="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-200 border border-zinc-800
+                 hover:border-zinc-700 rounded-md px-4 py-2 transition-colors"
+        >
+          <span id="load-more-indicator" class="hidden h-3.5 w-3.5 rounded-full border-2 border-zinc-500/40 border-t-zinc-300 animate-spin"></span>
+          <span>Load more</span>
+        </button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Row template — cloned per task and filled in with textContent (see app.js: renderRow). -->
+<template id="row-template">
+  <li class="group bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3" data-id="">
+    <div class="view-mode flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <p class="task-title text-sm text-zinc-100 break-words"></p>
+        <p class="task-desc mt-0.5 text-sm text-zinc-500 break-words"></p>
+      </div>
+      <div class="shrink-0 flex items-center gap-3 opacity-80 group-hover:opacity-100">
+        <button type="button" class="edit-btn text-xs text-zinc-400 hover:text-emerald-400 transition-colors">Edit</button>
+        <button type="button" class="delete-btn text-xs text-zinc-400 hover:text-rose-400 transition-colors">Delete</button>
+      </div>
+    </div>
+
+    <form class="edit-mode hidden space-y-2">
+      <label class="sr-only">Title</label>
+      <input type="text" class="edit-title w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-1.5 text-sm text-zinc-100
+             focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" required />
+      <label class="sr-only">Description</label>
+      <input type="text" class="edit-desc w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-1.5 text-sm text-zinc-100
+             focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
+      <div class="flex items-center gap-2">
+        <button type="submit" class="save-btn text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-zinc-950 rounded px-3 py-1.5 transition-colors">Save</button>
+        <button type="button" class="cancel-btn text-xs text-zinc-400 hover:text-zinc-200 px-3 py-1.5 transition-colors">Cancel</button>
+        <span class="edit-error text-xs text-rose-400 hidden" role="alert"></span>
+      </div>
+    </form>
+  </li>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/todos.js"></script>
+{% endblock %}

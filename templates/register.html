@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Create account — Todo{% endblock %}
+
+{% block content %}
+<main class="flex-1 flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-sm">
+    <div class="mb-8">
+      <h1 class="text-xl font-semibold text-zinc-100">Create an account</h1>
+      <p class="mt-1 text-sm text-zinc-400">Takes about ten seconds.</p>
+    </div>
+
+    <form id="register-form" class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4" novalidate>
+      <div>
+        <label for="username" class="block text-sm text-zinc-300 mb-1.5">Username</label>
+        <input
+          id="username" name="username" type="text" autocomplete="username" required
+          class="w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          placeholder="yakoub"
+        />
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm text-zinc-300 mb-1.5">Email</label>
+        <input
+          id="email" name="email" type="email" autocomplete="email" required
+          class="w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          placeholder="you@example.com"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm text-zinc-300 mb-1.5">Password</label>
+        <input
+          id="password" name="password" type="password" autocomplete="new-password" required minlength="8"
+          class="w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          placeholder="At least 8 characters"
+        />
+      </div>
+
+      <div>
+        <label for="confirm-password" class="block text-sm text-zinc-300 mb-1.5">Confirm password</label>
+        <input
+          id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" required minlength="8"
+          class="w-full rounded-md bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-zinc-100
+                 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          placeholder="Same as above"
+        />
+      </div>
+
+      <p id="register-error" class="text-sm text-rose-400 hidden" role="alert" aria-live="polite"></p>
+
+      <button
+        type="submit" id="register-submit"
+        class="w-full inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600
+               hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed
+               text-zinc-950 font-medium text-sm px-3 py-2.5 transition-colors"
+      >
+        <span id="register-indicator" class="hidden h-3.5 w-3.5 rounded-full border-2 border-zinc-950/40 border-t-zinc-950 animate-spin"></span>
+        <span>Create account</span>
+      </button>
+    </form>
+
+    <p class="mt-4 text-sm text-zinc-400 text-center">
+      Already have an account?
+      <a href="{{ '/' }}" class="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">Log in</a>
+    </p>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    TODO.redirectIfAuthenticated();
+
+    const form = document.getElementById("register-form");
+    const errorEl = document.getElementById("register-error");
+    const submitBtn = document.getElementById("register-submit");
+    const indicator = document.getElementById("register-indicator");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      TODO.hideMessage(errorEl);
+
+      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirm-password").value;
+
+      if (password.length < 8) {
+        TODO.showMessage(errorEl, "Password must be at least 8 characters.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        TODO.showMessage(errorEl, "Passwords don't match.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      indicator.classList.remove("hidden");
+
+      const { ok, status, data } = await TODO.api("/register", {
+        method: "POST",
+        auth: false,
+        body: { username, email, password },
+      });
+
+      submitBtn.disabled = false;
+      indicator.classList.add("hidden");
+
+      if (!ok) {
+        // 409 -> "Username already exists" / "Email already exists", straight from the API.
+        TODO.showMessage(errorEl, TODO.errorMessage(data, "Registration failed. Try again."));
+        return;
+      }
+
+      TODO.setToken(data.token);
+      window.location.href = TODO.ROUTES.dashboard;
+    });
+  });
+</script>
+{% endblock %}
