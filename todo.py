@@ -150,6 +150,7 @@ def get_tasks(
                 "id": t["id"],
                 "title": t["title"],
                 "desc": t["desc"],
+                "status": t["status"],
             }
             for t in tasks
         ],
