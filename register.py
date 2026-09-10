@@ -21,7 +21,7 @@ class login_user(BaseModel):
     password: str
 
 
-def validate_login(row, password, conn):
+def validate_login(row, password):
     if not row:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or password"
@@ -72,7 +72,7 @@ def user_login(user: login_user):
     cursor = conn.cursor()
     cursor.execute("SELECT password ,user_id FROM users WHERE email = ?", (user.email,))
     row = cursor.fetchone()
-    validate_login(row, user.password, conn)
+    validate_login(row, user.password)
     user_id = row["user_id"]
     token = create_token()
     cursor.execute("INSERT INTO tokens (token,user_id) VALUES (?,?)", (token, user_id))

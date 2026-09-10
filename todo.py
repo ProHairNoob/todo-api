@@ -7,13 +7,19 @@ from db import connect_db, users_path, tasks_path
 router = APIRouter()
 
 
-class Todo(BaseModel):
+class TodoAdd(BaseModel):
     desc: str
     title: str
 
 
+class TodoUpdate(BaseModel):
+    desc: str
+    title: str
+    status: str
+
+
 @router.post("/todos")
-def create_task(todo: Todo, authorization: str = Header(...)):
+def create_task(todo: TodoAdd, authorization: str = Header(...)):
     conn = connect_db(users_path)
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM tokens WHERE token = ?", (authorization,))
@@ -36,7 +42,7 @@ def create_task(todo: Todo, authorization: str = Header(...)):
 
 
 @router.put("/todos/{task_id}")
-def update_task(task_id: int, todo: Todo, authorization: str = Header(...)):
+def update_task(task_id: int, todo: TodoUpdate, authorization: str = Header(...)):
     conn = connect_db(users_path)
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM tokens WHERE token = ?", (authorization,))
@@ -64,8 +70,8 @@ def update_task(task_id: int, todo: Todo, authorization: str = Header(...)):
         )
 
     cursor.execute(
-        "UPDATE tasks SET desc = ?, title = ? WHERE id = ? AND user_id = ?",
-        (todo.desc, todo.title, task_id, user_id),
+        "UPDATE tasks SET desc = ?, title = ? , status = ? WHERE id = ? AND user_id = ?",
+        (todo.desc, todo.title, todo.status, task_id, user_id),
     )
     conn.commit()
     conn.close()

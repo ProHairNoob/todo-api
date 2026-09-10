@@ -51,7 +51,8 @@ def make_tasks_db():
         user_id INT NOT NULL,
         id INTEGER PRIMARY KEY,
         desc TEXT NOT NULL,
-        title TEXT NOT NULL
+        title TEXT NOT NULL,
+        status TEXT CHECK (status in ('todo','in-progress','done')) DEFAULT todo
     )
     """)
     conn.commit()
