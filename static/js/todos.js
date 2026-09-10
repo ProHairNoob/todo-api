@@ -38,12 +38,17 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMoreWrap.classList.toggle("hidden", exhausted || total === 0);
   }
 
+  function currentStatus(node) {
+    return node.querySelector(".task-status").value || "todo";
+  }
+
   function buildRow(task) {
     const node = rowTemplate.content.firstElementChild.cloneNode(true);
     node.dataset.id = task.id;
     node.querySelector(".task-title").textContent = task.title;
     node.querySelector(".task-desc").textContent = task.desc || "";
     node.querySelector(".task-desc").classList.toggle("hidden", !task.desc);
+    node.querySelector(".task-status").value = task.status || "todo";
     wireRow(node, task);
     return node;
   }
@@ -54,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const editTitle = node.querySelector(".edit-title");
     const editDesc = node.querySelector(".edit-desc");
     const editError = node.querySelector(".edit-error");
+    const statusSelect = node.querySelector(".task-status");
 
     node.querySelector(".edit-btn").addEventListener("click", () => {
       editTitle.value = node.querySelector(".task-title").textContent;
@@ -81,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const { ok, status, data } = await TODO.api(`/todos/${node.dataset.id}`, {
         method: "PUT",
-        body: { title: newTitle, desc: editDesc.value.trim() },
+        body: { title: newTitle, desc: editDesc.value.trim(), status: currentStatus(node) },
       });
 
       saveBtn.disabled = false;
@@ -107,6 +113,41 @@ document.addEventListener("DOMContentLoaded", () => {
       editMode.classList.add("hidden");
       viewMode.classList.remove("hidden");
     });
+
+    statusSelect.addEventListener("change", async () => {
+      const previous = statusSelect.dataset.previous || task.status || "todo";
+      const next = statusSelect.value;
+      statusSelect.disabled = true;
+      TODO.hideMessage(pageError);
+
+      const { ok, status, data } = await TODO.api(`/todos/${node.dataset.id}`, {
+        method: "PUT",
+        body: {
+          title: node.querySelector(".task-title").textContent,
+          desc: node.querySelector(".task-desc").textContent,
+          status: next,
+        },
+      });
+
+      statusSelect.disabled = false;
+
+      if (!ok) {
+        statusSelect.value = previous;
+        if (status === 404) {
+          node.remove();
+          total = Math.max(0, total - 1);
+          loadedCount = Math.max(0, loadedCount - 1);
+          TODO.showMessage(pageError, "That todo was already deleted elsewhere.");
+          updateEmptyAndLoadMore();
+          return;
+        }
+        TODO.showMessage(pageError, TODO.errorMessage(data, "Couldn't update status."));
+        return;
+      }
+
+      statusSelect.dataset.previous = next;
+    });
+    statusSelect.dataset.previous = currentStatus(node);
 
     node.querySelector(".delete-btn").addEventListener("click", async () => {
       const confirmed = window.confirm(`Delete "${task.title}"?`);
@@ -184,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    list.prepend(buildRow(data));
+    list.prepend(buildRow({ ...data, status: "todo" }));
     total += 1;
     loadedCount += 1;
     updateEmptyAndLoadMore();
